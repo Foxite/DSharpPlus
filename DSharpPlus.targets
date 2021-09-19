@@ -3,6 +3,7 @@
 
   <PropertyGroup>
     <VersionPrefix>4.1.0</VersionPrefix>
+    <PackageVersion>4.1.0</PackageVersion>
     <NoWarn>1591</NoWarn>
     <LangVersion>9.0</LangVersion>
     <Optimize>True</Optimize>

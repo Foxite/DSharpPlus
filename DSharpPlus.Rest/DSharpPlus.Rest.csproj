@@ -17,7 +17,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DSharpPlus\DSharpPlus.csproj" />
+    <ProjectReference Include="..\DSharpPlus\Foxite.DSharpPlus.csproj" />
   </ItemGroup>
 
 </Project>
