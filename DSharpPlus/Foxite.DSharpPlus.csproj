@@ -4,13 +4,14 @@
   <Import Project="../DSharpPlus.targets" />
 
   <PropertyGroup>
-    <AssemblyName>DSharpPlus</AssemblyName>
+    <AssemblyName>Foxite.DSharpPlus</AssemblyName>
     <RootNamespace>DSharpPlus</RootNamespace>
     <OutputType>Library</OutputType>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
   <PropertyGroup>
+    <PackageId>Foxite.DSharpPlus</PackageId>
     <Description>A C# API for Discord based off DiscordSharp, but rewritten to fit the API standards.</Description>
     <PackageTags>discord, discord-api, bots, discord-bots, chat, dsharp, dsharpplus, csharp, dotnet, vb-net, fsharp, webhooks</PackageTags>
   </PropertyGroup>

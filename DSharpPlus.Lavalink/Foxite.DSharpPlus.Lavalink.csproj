@@ -4,7 +4,7 @@
   <Import Project="../DSharpPlus.targets" />
 
   <PropertyGroup>
-    <AssemblyName>DSharpPlus.Lavalink</AssemblyName>
+    <AssemblyName>Foxite.DSharpPlus.Lavalink</AssemblyName>
     <RootNamespace>DSharpPlus.Lavalink</RootNamespace>
     <OutputType>Library</OutputType>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
@@ -12,13 +12,13 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <PackageId>DSharpPlus.Lavalink</PackageId>
+    <PackageId>Foxite.DSharpPlus.Lavalink</PackageId>
     <Description>Lavalink implementation for DSharpPlus. Lavalink is an easy and lightweight method of streaming audio to Discord.</Description>
     <PackageTags>discord, discord-api, bots, discord-bots, chat, dsharp, dsharpplus, csharp, dotnet, vb-net, fsharp, audio, voice, radio, music, lavalink, lavaplayer</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DSharpPlus\DSharpPlus.csproj" />
+    <ProjectReference Include="..\DSharpPlus\Foxite.DSharpPlus.csproj" />
   </ItemGroup>
 
 </Project>
