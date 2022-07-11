@@ -164,10 +164,10 @@ namespace DSharpPlus.Net
         }
 
         public Task ExecuteRequestAsync(BaseRestRequest request)
-            => request == null ? throw new ArgumentNullException(nameof(request)) : this.ExecuteRequestAsync(request, null, null);
+            => request == null ? throw new ArgumentNullException(nameof(request)) : this.ExecuteRequestAsync(request, null, null, 0);
 
         // to allow proper rescheduling of the first request from a bucket
-        private async Task ExecuteRequestAsync(BaseRestRequest request, RateLimitBucket bucket, TaskCompletionSource<bool> ratelimitTcs)
+        private async Task ExecuteRequestAsync(BaseRestRequest request, RateLimitBucket bucket, TaskCompletionSource<bool> ratelimitTcs, int networkRetryCount)
         {
             if (this._disposed)
                 return;
@@ -214,7 +214,7 @@ namespace DSharpPlus.Net
 
                         this.Logger.LogWarning(LoggerEvents.RatelimitPreemptive, "Pre-emptive ratelimit triggered - waiting until {0:yyyy-MM-dd HH:mm:ss zzz} ({1:c}).", resetDate, delay);
                         Task.Delay(delay)
-                            .ContinueWith(_ => this.ExecuteRequestAsync(request, null, null))
+                            .ContinueWith(_ => this.ExecuteRequestAsync(request, null, null, networkRetryCount))
                             .LogTaskFault(this.Logger, LogLevel.Error, LoggerEvents.RestError, "Error while executing request");
 
                         return;
@@ -244,9 +244,21 @@ namespace DSharpPlus.Net
                 }
                 catch (HttpRequestException httpex)
                 {
-                    this.Logger.LogError(LoggerEvents.RestError, httpex, "Request to {Url} triggered an HttpException", request.Url);
-                    request.SetFaulted(httpex);
-                    this.FailInitialRateLimitTest(request, ratelimitTcs);
+                    if (networkRetryCount < this.Discord.Configuration.NetworkRetryCount)
+                    {
+                        networkRetryCount++;
+                        this.Logger.LogWarning(LoggerEvents.RestError, httpex, "Request triggered an HttpException, requeueing request to {Url}", request.Url);
+                        Task.Delay(TimeSpan.FromSeconds(networkRetryCount * 5))
+                            .ContinueWith(_ => this.ExecuteRequestAsync(request, bucket, ratelimitTcs, networkRetryCount))
+                            .LogTaskFault(this.Logger, LogLevel.Error, LoggerEvents.RestError, "Error while executing request");
+                    }
+                    else
+                    {
+                        this.Logger.LogError(LoggerEvents.RestError, httpex, "Request to {Url} triggered an HttpException", request.Url);
+                        request.SetFaulted(httpex);
+                        this.FailInitialRateLimitTest(request, ratelimitTcs);
+                    }
+
                     return;
                 }
 
@@ -293,14 +305,14 @@ namespace DSharpPlus.Net
                                     // we don't want to wait here until all the blocked requests have been run, additionally Set can never throw an exception that could be suppressed here
                                     _ = this.GlobalRateLimitEvent.SetAsync();
                                 }
-                                this.ExecuteRequestAsync(request, bucket, ratelimitTcs)
+                                this.ExecuteRequestAsync(request, bucket, ratelimitTcs, networkRetryCount)
                                     .LogTaskFault(this.Logger, LogLevel.Error, LoggerEvents.RestError, "Error while retrying request");
                             }
                             else
                             {
                                 this.Logger.LogError(LoggerEvents.RatelimitHit, "Ratelimit hit, requeueing request to {Url}", request.Url);
                                 await wait.ConfigureAwait(false);
-                                this.ExecuteRequestAsync(request, bucket, ratelimitTcs)
+                                this.ExecuteRequestAsync(request, bucket, ratelimitTcs, networkRetryCount)
                                     .LogTaskFault(this.Logger, LogLevel.Error, LoggerEvents.RestError, "Error while retrying request");
                             }
 
@@ -313,6 +325,16 @@ namespace DSharpPlus.Net
                     case 503:
                     case 504:
                         ex = new ServerErrorException(request, response);
+
+                        if (networkRetryCount < this.Discord.Configuration.NetworkRetryCount)
+                        {
+                            networkRetryCount++;
+                            this.Logger.LogWarning(LoggerEvents.RestError, "Encountered HTTP {Status} error, requeueing request to {Url}", response.ResponseCode, request.Url);
+                            Task.Delay(TimeSpan.FromSeconds(networkRetryCount * 5))
+                                .ContinueWith(_ => this.ExecuteRequestAsync(request, bucket, ratelimitTcs, networkRetryCount))
+                                .LogTaskFault(this.Logger, LogLevel.Error, LoggerEvents.RestError, "Error while executing request");
+                            return;
+                        }
                         break;
                 }
 

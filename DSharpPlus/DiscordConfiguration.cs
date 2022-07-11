@@ -189,6 +189,12 @@ namespace DSharpPlus
         public ILoggerFactory LoggerFactory { internal get; set; } = null;
 
         /// <summary>
+        /// <para>Sets the maximum allowed amount of times to retry API requests that fail to network or server-side errors (such as connection resets, DNS lookup failures, or HTTP 5xx errors).</para>
+        /// <para>If set to 0, do not retry requests for these failures.</para>
+        /// </summary>
+        public int NetworkRetryCount { get; set; } = 5;
+
+        /// <summary>
         /// Creates a new configuration with default values.
         /// </summary>
         public DiscordConfiguration()
