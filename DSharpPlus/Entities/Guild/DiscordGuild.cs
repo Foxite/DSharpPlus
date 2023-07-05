@@ -1421,8 +1421,15 @@ namespace DSharpPlus.Entities
         /// </summary>
         /// <returns>A collection of this guild's channels.</returns>
         /// <exception cref="ServerErrorException">Thrown when Discord is unable to process the request.</exception>
-        public Task<IReadOnlyList<DiscordChannel>> GetChannelsAsync()
-            => this.Discord.ApiClient.GetGuildChannelsAsync(this.Id);
+        public async Task<IReadOnlyList<DiscordChannel>> GetChannelsAsync(bool updateCache = false)
+        {
+            var result = await this.Discord.ApiClient.GetGuildChannelsAsync(this.Id);
+            if (updateCache)
+            {
+                this._channels = new ConcurrentDictionary<ulong, DiscordChannel>(result.Select(channel => new KeyValuePair<ulong, DiscordChannel>(channel.Id, channel)));
+            }
+            return result;
+        }
 
         /// <summary>
         /// Creates a new role in this guild.
